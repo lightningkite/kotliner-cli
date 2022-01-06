@@ -53,6 +53,12 @@ Deleting 1, 2, 3
 - [X] Boolean Flags (i.e. using `--flag` for `flag=true`)
 - [X] Description Annotation - add the annotation to provide more documentation about functions and parameters.
 
+## Potential Features
+
+- [ ] Annotation to automatically register functions to expose to the CLI
+  - Questionable security-wise - makes it easy to insert functionality with no obvious connection.
+- [ ] Compiler plugin to read KDoc for runtime documentation
+
 ## Deliberately unsupported features
 
 - Object types without a string constructor - No good way to represent in the command line.

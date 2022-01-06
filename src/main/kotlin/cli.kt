@@ -8,8 +8,27 @@ import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.jvm.jvmName
 import kotlin.system.exitProcess
 
-private fun noSetup(): Unit {}
-
+/**
+ * Exposes the given functions as subcommands in a fairly traditional CLI style.
+ * The result is printed to [System.out]`.
+ *
+ * Supported argument types:
+ * - Primitives (Char, Byte, Short, Int, Long, Float, Double, Boolean, String)
+ * - Classes with a String constructor, such as [java.io.File]
+ *
+ * Supported argument styles:
+ * - Required
+ * - Optional using default arguments
+ * - Variadic
+ *
+ * If no subcommand is provided bu the user OR `--help` is given, a list of available subcommands is printed.
+ *
+ * If the requirements for executing the function are not met OR `--help` is given, some help information is printed.
+ *
+ * @param arguments The arguments given by the user.
+ * @param setup The environment setup function which takes arguments before the sub command.
+ * @param available The functions to make available as sub commands.
+ */
 public fun cli(
     arguments: Array<out String>,
     setup: KFunction<*> = ::noSetup,
@@ -18,20 +37,54 @@ public fun cli(
     val result = cliReturning(arguments, setup, available)
     if(result != Unit) println(result)
 }
+
+/**
+ * Exposes the given functions as subcommands in a fairly traditional CLI style.
+ * The result is printed to [System.out]`.
+ *
+ * Supported argument types:
+ * - Primitives (Char, Byte, Short, Int, Long, Float, Double, Boolean, String)
+ * - Classes with a String constructor, such as [java.io.File]
+ *
+ * Supported argument styles:
+ * - Required
+ * - Optional using default arguments
+ * - Variadic
+ *
+ * If no subcommand is provided bu the user OR `--help` is given, a list of available subcommands is printed.
+ *
+ * If the requirements for executing the function are not met OR `--help` is given, some help information is printed.
+ *
+ * @param arguments The arguments given by the user.
+ * @param setup The environment setup function which takes arguments before the sub command.
+ * @param available The functions to make available as sub commands.
+ */
 public fun cli(
     arguments: Array<out String>,
     vararg available: KFunction<*>
 ): Unit = cli(arguments = arguments, setup = ::noSetup, available = available.toList())
 
-public inline fun <R> select(noinline function: ()->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, R> select(noinline function: (A)->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, B, R> select(noinline function: (A, B)->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, B, C, R> select(noinline function: (A, B, C)->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, B, C, D, R> select(noinline function: (A, B, C, D)->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, B, C, D, E, R> select(noinline function: (A, B, C, D, E)->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, B, C, D, E, F, R> select(noinline function: (A, B, C, D, E, F)->R): KFunction<R> = function as KFunction<R>
-public inline fun <A, B, C, D, E, F, G, R> select(noinline function: (A, B, C, D, E, F, G)->R): KFunction<R> = function as KFunction<R>
-
+/**
+ * Exposes the given functions as subcommands in a fairly traditional CLI style.
+ *
+ * Supported argument types:
+ * - Primitives (Char, Byte, Short, Int, Long, Float, Double, Boolean, String)
+ * - Classes with a String constructor, such as [java.io.File]
+ *
+ * Supported argument styles:
+ * - Required
+ * - Optional using default arguments
+ * - Variadic
+ *
+ * If no subcommand is provided bu the user OR `--help` is given, a list of available subcommands is printed.
+ *
+ * If the requirements for executing the function are not met OR `--help` is given, some help information is printed.
+ *
+ * @param arguments The arguments given by the user.
+ * @param setup The environment setup function which takes arguments before the sub command.
+ * @param available The functions to make available as sub commands.
+ * @return Returns the result of the function instead of printing it.
+ */
 public fun cliReturning(
     arguments: Array<out String>,
     setup: KFunction<*> = ::noSetup,
@@ -74,7 +127,15 @@ public fun cliReturning(
     return finalFunc.cliCall(funcArgs)
 }
 
+/**
+ * A short description of the parameter or subcommand.
+ */
 public annotation class Description(val description: String)
+
+/**
+ * A longer set of information about the parameter or subcommand.
+ */
+public annotation class Documentation(val documentation: String)
 
 private fun KParameter.toHumanString(): String {
     return if(this.isVararg) this.name + ": " + this.varargType().toHumanString() + "..."
@@ -86,8 +147,43 @@ private fun KFunction<*>.toHumanString(): String {
     return findAnnotation<Description>()?.let { "$prefix - ${it.description}" } ?: prefix
 }
 
-fun <R> KFunction<R>.cliCall(arguments: Array<out String>): R = cliCall(arguments.toList())
-fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
+/**
+ * Exposes the function in a fairly traditional CLI style.
+ *
+ * Supported argument types:
+ * - Primitives (Char, Byte, Short, Int, Long, Float, Double, Boolean, String)
+ * - Classes with a String constructor, such as [java.io.File]
+ *
+ * Supported argument styles:
+ * - Required
+ * - Optional using default arguments
+ * - Variadic
+ *
+ * If the requirements for executing the function are not met OR `--help` is given, some help information is printed.
+ *
+ * @param arguments The arguments given by the user.
+ * @return Returns the result of the function.
+ */
+public fun <R> KFunction<R>.cliCall(arguments: Array<out String>): R = cliCall(arguments.toList())
+
+/**
+ * Exposes the function in a fairly traditional CLI style.
+ *
+ * Supported argument types:
+ * - Primitives (Char, Byte, Short, Int, Long, Float, Double, Boolean, String)
+ * - Classes with a String constructor, such as [java.io.File]
+ *
+ * Supported argument styles:
+ * - Required
+ * - Optional using default arguments
+ * - Variadic
+ *
+ * If the requirements for executing the function are not met OR `--help` is given, some help information is printed.
+ *
+ * @param arguments The arguments given by the user.
+ * @return Returns the result of the function.
+ */
+public fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
     // Handle help
     if(arguments.size == 1 && arguments[0].endsWith("help") && arguments[0].startsWith("-")) {
         helpAndExit()
@@ -110,6 +206,7 @@ fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
                 else -> listOf()
             }
             val newEntry = parse(param.varargType(), entry)
+            @Suppress("UNCHECKED_CAST")
             realArgs[param] = when(param.type.jvmErasure) {
                 Array::class -> (existing + newEntry).toTypedArray()
                 ByteArray::class -> ((existing + newEntry) as List<Byte>).toByteArray()
@@ -221,6 +318,7 @@ private fun parse(type: KType, value: String): Any? {
 private fun KFunction<*>.helpAndExit(): Nothing {
     println(name)
     this.findAnnotation<Description>()?.let { println(it.description) }
+    this.findAnnotation<Documentation>()?.let { println(it.documentation) }
     for(param in valueParameters) {
         if (param.isVararg){
             println("--${param.name} <${param.varargType().toHumanString()}>...")
@@ -230,8 +328,11 @@ private fun KFunction<*>.helpAndExit(): Nothing {
             println("--${param.name} <${param.type.toHumanString()}>")
         }
         param.findAnnotation<Description>()?.let { println("    ${it.description}") }
+        param.findAnnotation<Documentation>()?.let { println("    ${it.documentation}") }
     }
     exitProcess(0)
 }
 
 private val Any?.typeString: String get() = if(this == null) "null" else this::class.simpleName ?: "?"
+
+private fun noSetup(): Unit {}
