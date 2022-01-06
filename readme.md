@@ -2,6 +2,19 @@
 
 A different take on making command line programs, emphasizing development speed over customization
 
+## Status
+
+Auto-deployed to Maven Central after passing unit tests using GitHub Actions
+
+## Download
+
+```kotlin
+dependencies {
+  //...
+  implementation("com.lightningkite:kotliner-cli:1.0.1-SNAPSHOT")
+}
+```
+
 ## Example
 
 ```kotlin
