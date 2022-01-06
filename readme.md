@@ -6,8 +6,8 @@ A different take on making command line programs, emphasizing development speed 
 
 Auto-deployed to Maven Central after passing unit tests using GitHub Actions
 
-![release status](https://github.com/lightningkite/kotliner-cli/actions/workflows/release.yaml/badge.svg)
-![snapshot status](https://github.com/lightningkite/kotliner-cli/actions/workflows/snapshot.yaml/badge.svg)
+[![release status](https://github.com/lightningkite/kotliner-cli/actions/workflows/release.yaml/badge.svg)](https://s01.oss.sonatype.org/content/repositories/releases/com/lightningkite/kotliner-cli/)
+[![snapshot status](https://github.com/lightningkite/kotliner-cli/actions/workflows/snapshot.yaml/badge.svg)](https://s01.oss.sonatype.org/content/repositories/snapshots/com/lightningkite/kotliner-cli/)
 
 ## Download
 
