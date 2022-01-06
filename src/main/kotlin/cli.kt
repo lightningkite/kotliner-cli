@@ -5,8 +5,8 @@ import kotlin.reflect.full.findAnnotation
 import kotlin.reflect.full.valueParameters
 import kotlin.reflect.jvm.isAccessible
 import kotlin.reflect.jvm.jvmErasure
-import kotlin.reflect.jvm.jvmName
-import kotlin.system.exitProcess
+
+public class WrongCliArgumentsException: Exception("")
 
 /**
  * Exposes the given functions as subcommands in a fairly traditional CLI style.
@@ -92,11 +92,7 @@ public fun cliReturning(
 ): Any? {
     // Handle help
     if(arguments.isEmpty() || arguments.size == 1 && arguments[0].endsWith("help") && arguments[0].startsWith("-")) {
-        println("Available commands:")
-        for(a in available) {
-            println(a.toHumanString())
-        }
-        exitProcess(0)
+        cliReturningHelp(setup, available)
     }
     val envArgs = HashMap<KParameter, Any?>()
     val funcArgs = ArrayList<String>()
@@ -108,23 +104,45 @@ public fun cliReturning(
             funcArgs.add(entry)
         } else if(entry.startsWith("--")) {
             val option = entry.removePrefix("--")
-            val value = arguments.getOrNull(++index) ?: setup.helpAndExit()
-            val param = setup.valueParameters.find { it.name == option } ?: setup.helpAndExit()
-            envArgs[param] = parse(param.type, value)
+            val value = arguments.getOrNull(++index)
+            val param = setup.valueParameters.find { it.name == option } ?: setup.helpAndExit("Global parameter with name '$option' not found")
+            if(param.type.jvmErasure == Boolean::class && param.isOptional && (value == null || value.startsWith("--") || (value != "true" && value != "false"))) {
+                envArgs[param] = true
+                continue
+            }
+            envArgs[param] = parse(param.type, value ?: setup.helpAndExit("No value provided for global parameter '$option'"))
         } else {
+            setup.isAccessible = true
+            setup.callBy(envArgs)
             func = available.find { it.name == entry }
         }
         index++
     }
     val finalFunc = func
     if(finalFunc == null) {
-        println("Available commands:")
-        for(a in available) {
-            println(a.toHumanString())
-        }
-        exitProcess(0)
+        cliReturningHelp(setup, available)
     }
     return finalFunc.cliCall(funcArgs)
+}
+
+private fun cliReturningHelp(
+    setup: KFunction<*> = ::noSetup,
+    available: List<KFunction<*>>
+): Nothing {
+    setup.valueParameters
+        .takeUnless { it.isEmpty() }
+        ?.let {
+            println("Global options:")
+            for(param in it) {
+                param.printShellStringHelp()
+            }
+            println()
+        }
+    println("Available commands:")
+    for(a in available) {
+        println(a.toHumanString())
+    }
+    throw WrongCliArgumentsException()
 }
 
 /**
@@ -223,25 +241,30 @@ public fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
         while(index < arguments.size) {
             val entry = arguments[index]
             if(entry.startsWith("--")) {
-                val key = entry.removePrefix("--")
-                val param = this.valueParameters.find { it.name == key } ?: helpAndExit()
+                val option = entry.removePrefix("--")
+                val param = this.valueParameters.find { it.name == option } ?: helpAndExit("Parameter with name '$option' not found")
                 val value = arguments.getOrNull(++index)
                 if(param.type.jvmErasure == Boolean::class && param.isOptional && (value == null || value.startsWith("--") || (value != "true" && value != "false"))) {
                     realArgs[param] = true
                     continue
                 }
-                realArgs[param] = parse(param.type, value ?: helpAndExit())
+                if(param.isVararg) {
+                    parseVararg(param, value ?: helpAndExit("No value provided for parameter '$option'"))
+                } else {
+                    realArgs[param] = parse(param.type, value ?: helpAndExit("No value provided for parameter '$option'"))
+                }
                 usedNamedParameter = true
             } else {
                 if(usedNamedParameter) {
-                    val v = this.valueParameters.find { it.isVararg } ?: helpAndExit()
+                    val v = this.valueParameters.find { it.isVararg } ?: helpAndExit("No varargs parameter found and named parameters have already been used.")
                     parseVararg(v, entry)
                 } else {
-                    val param = this.valueParameters.find { it.index == index } ?: this.valueParameters.find { it.isVararg } ?: helpAndExit()
+                    val param = this.valueParameters.find { it.index == index } ?: this.valueParameters.find { it.isVararg } ?: helpAndExit("More arguments provided than the function can receive.")
+                    val value = entry
                     if(param.isVararg) {
-                        parseVararg(param, entry)
+                        parseVararg(param, value)
                     } else {
-                        realArgs[param] = parse(param.type, entry)
+                        realArgs[param] = parse(param.type, value)
                     }
                 }
             }
@@ -264,7 +287,7 @@ public fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
                     CharArray::class -> charArrayOf()
                     else -> throw IllegalArgumentException()
                 }
-            } else helpAndExit()
+            } else helpAndExit("'${param.name}' is required, but wasn't provided.")
         }
     }
     return this.callBy(realArgs)
@@ -315,24 +338,29 @@ private fun parse(type: KType, value: String): Any? {
     }
 }
 
-private fun KFunction<*>.helpAndExit(): Nothing {
+private fun KFunction<*>.helpAndExit(errorMessage: String? = null): Nothing {
+    errorMessage?.let { println(errorMessage); println() }
     println(name)
     this.findAnnotation<Description>()?.let { println(it.description) }
     this.findAnnotation<Documentation>()?.let { println(it.documentation) }
     for(param in valueParameters) {
-        if (param.isVararg){
-            println("--${param.name} <${param.varargType().toHumanString()}>...")
-        } else if(param.isOptional) {
-            println("--${param.name} <${param.type.toHumanString()}> (optional)")
-        } else {
-            println("--${param.name} <${param.type.toHumanString()}>")
-        }
-        param.findAnnotation<Description>()?.let { println("    ${it.description}") }
-        param.findAnnotation<Documentation>()?.let { println("    ${it.documentation}") }
+        param.printShellStringHelp()
     }
-    exitProcess(0)
+    throw WrongCliArgumentsException()
 }
 
+private fun KParameter.toShellString() = if (isVararg){
+    "--${name} <${varargType().toHumanString()}>..."
+} else if(isOptional) {
+    "--${name} <${type.toHumanString()}> (optional)"
+} else {
+    "--${name} <${type.toHumanString()}>"
+}
+private fun KParameter.printShellStringHelp() {
+    println(toShellString())
+    findAnnotation<Description>()?.let { println("    ${it.description}") }
+    findAnnotation<Documentation>()?.let { println("    ${it.documentation}") }
+}
 private val Any?.typeString: String get() = if(this == null) "null" else this::class.simpleName ?: "?"
 
 private fun noSetup(): Unit {}

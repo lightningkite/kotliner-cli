@@ -66,11 +66,19 @@ class CliKtTest {
         cliReturning(arrayOf("test"), available = listOf(TestObject::test))
         assertTrue(success)
     }
+    @Test fun testSetup() {
+        success = false
+        cliReturning(arrayOf("doNothing"), setup = ::commandA, available = listOf(::doNothing))
+        assertTrue(success)
+    }
 }
 
 private var success = false
 private fun commandA() {
     success = true
+}
+
+private fun doNothing() {
 }
 
 private fun commandB(number: Int, text: String) {
