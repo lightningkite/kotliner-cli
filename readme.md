@@ -44,8 +44,16 @@ Deleting 1, 2, 3
 
 ## Supported Features
 
+- [X] Primitive Types
+- [X] Types with a constructor that takes a `String`
 - [X] Ordered Arguments
 - [X] Named Arguments
 - [X] Default Arguments
 - [X] Variadic Arguments
-- [X] Boolean Flags
+- [X] Boolean Flags (i.e. using `--flag` for `flag=true`)
+- [X] Description Annotation - add the annotation to provide more documentation about functions and parameters.
+
+## Deliberately unsupported features
+
+- Object types without a string constructor - No good way to represent in the command line.
+- Expose all functions in the command line - would be a potential security problem 
