@@ -41,3 +41,11 @@ Running the server at 0.0.0.0 with port 8080
 $ myProgram deleteItems 1 2 3
 Deleting 1, 2, 3
 ```
+
+## Supported Features
+
+- [X] Ordered Arguments
+- [X] Named Arguments
+- [X] Default Arguments
+- [X] Variadic Arguments
+- [X] Boolean Flags

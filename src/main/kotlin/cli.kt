@@ -153,7 +153,22 @@ fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
     }
     this.isAccessible = true
     for(param in valueParameters) {
-        if(!param.isOptional && !realArgs.containsKey(param)) helpAndExit()
+        if(!param.isOptional && !realArgs.containsKey(param)) {
+            if(param.isVararg) {
+                realArgs[param] = when(param.type.jvmErasure) {
+                    Array::class -> arrayOf<Any?>()
+                    ByteArray::class -> byteArrayOf()
+                    ShortArray::class -> shortArrayOf()
+                    IntArray::class -> intArrayOf()
+                    LongArray::class -> longArrayOf()
+                    FloatArray::class -> floatArrayOf()
+                    DoubleArray::class -> doubleArrayOf()
+                    BooleanArray::class -> booleanArrayOf()
+                    CharArray::class -> charArrayOf()
+                    else -> throw IllegalArgumentException()
+                }
+            } else helpAndExit()
+        }
     }
     return this.callBy(realArgs)
 }
@@ -193,10 +208,12 @@ private fun parse(type: KType, value: String): Any? {
             String::class -> value
             Boolean::class -> value.toBoolean()
             Char::class -> value.single()
-            else -> cls.constructors
-                .find { it.valueParameters.size == 1 && it.valueParameters[0].type.jvmErasure == String::class }
-                ?.call(value)
-                ?: throw IllegalArgumentException("Found no string constructors for ${cls.qualifiedName}")
+            else ->  {
+                val constructor = cls.constructors
+                    .find { it.valueParameters.size == 1 && it.valueParameters[0].type.jvmErasure == String::class }
+                    ?: throw IllegalArgumentException("Found no string constructors for ${cls.qualifiedName}")
+                constructor.call(value)
+            }
         }
     }
 }

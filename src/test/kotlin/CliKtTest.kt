@@ -61,6 +61,11 @@ class CliKtTest {
         assertEquals(true, cliReturning(arrayOf("commandE", "--flag", "--file", "test.txt"), available = listOf(::commandE)))
         assertEquals(true, cliReturning(arrayOf("commandE", "--flag", "true", "--file", "test.txt"), available = listOf(::commandE)))
     }
+    @Test fun obj() {
+        success = false
+        cliReturning(arrayOf("test"), available = listOf(TestObject::test))
+        assertTrue(success)
+    }
 }
 
 private var success = false
@@ -82,4 +87,10 @@ private fun commandD(file: File, vararg multiple: Int) {
 
 private fun commandE(file: File, flag: Boolean = false): Boolean {
     return flag
+}
+
+object TestObject {
+    fun test() {
+        success = true
+    }
 }
