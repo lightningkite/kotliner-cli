@@ -332,6 +332,9 @@ private fun parse(type: KType, value: String): Any? {
             Boolean::class -> value.toBoolean()
             Char::class -> value.single()
             else ->  {
+                cls.java.enumConstants?.let {
+                    return it.find { (it as Enum<*>).name.equals(value, true) }
+                }
                 val constructor = cls.constructors
                     .find { it.valueParameters.size == 1 && it.valueParameters[0].type.jvmErasure == String::class }
                     ?: throw IllegalArgumentException("Found no string constructors for ${cls.qualifiedName}")

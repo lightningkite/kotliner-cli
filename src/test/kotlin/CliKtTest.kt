@@ -71,7 +71,14 @@ class CliKtTest {
         cliReturning(arrayOf("doNothing"), setup = ::commandA, available = listOf(::doNothing))
         assertTrue(success)
     }
+    @Test fun testEnum() {
+        success = false
+        cliReturning(arrayOf("commandF", "ValueB"), setup = ::doNothing, available = listOf(::commandF))
+        assertTrue(success)
+    }
 }
+
+enum class TestEnum { ValueA, ValueB }
 
 private var success = false
 private fun commandA() {
@@ -95,6 +102,11 @@ private fun commandD(file: File, vararg multiple: Int) {
 
 private fun commandE(file: File, flag: Boolean = false): Boolean {
     return flag
+}
+
+private fun commandF(enumValue: TestEnum): Boolean {
+    success = true
+    return enumValue == TestEnum.ValueA
 }
 
 object TestObject {

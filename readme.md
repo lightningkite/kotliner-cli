@@ -81,6 +81,7 @@ Deleting 1, 2, 3
 - [X] Named Arguments
 - [X] Default Arguments
 - [X] Variadic Arguments
+- [X] Enum Arguments (case-insensitive)
 - [X] Boolean Flags (i.e. using `--flag` for `flag=true`)
 - [X] Description Annotation - add the annotation to provide more documentation about functions and parameters.
 
