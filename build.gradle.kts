@@ -2,10 +2,10 @@ import com.lightningkite.deployhelpers.*
 
 buildscript {
     repositories {
-        maven(url="https://s01.oss.sonatype.org/service/local/repo_groups/public/content")
+        maven(url="https://s01.oss.sonatype.org/content/repositories/snapshots/")
     }
     dependencies {
-        classpath("com.lightningkite:deploy-helpers:0.0.3")
+        classpath("com.lightningkite:deploy-helpers:master-SNAPSHOT")
     }
 }
 
