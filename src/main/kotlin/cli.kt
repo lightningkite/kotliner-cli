@@ -33,9 +33,12 @@ public fun cli(
     arguments: Array<out String>,
     setup: KFunction<*> = ::noSetup,
     available: List<KFunction<*>>
-): Unit {
+): Unit = try {
     val result = cliReturning(arguments, setup, available)
     if(result != Unit) println(result)
+    Unit
+} catch(e: WrongCliArgumentsException) {
+    /*squish*/
 }
 
 /**

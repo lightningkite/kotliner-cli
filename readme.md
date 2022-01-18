@@ -1,6 +1,19 @@
 # Kotlin-er CLI
 
-A different take on making command line programs, emphasizing development speed over customization
+A different take on making command line programs, emphasizing development speed over customization and performance.
+
+Essentially exposes Kotlin functions as command-line options.
+
+Pros:
+
+- Extremely fast to set up
+- Uses Kotlin reflection to reduce documentation and argument definition overhead
+- Ensures at least a minimal documentation and error checking will exist in your CLI
+
+Cons:
+
+- Slow runtime performance due to reflection
+- Not compatible with Kotlin Multiplatform due to reflection
 
 ## Status
 
@@ -9,12 +22,15 @@ Auto-deployed to Maven Central after passing unit tests using GitHub Actions
 [![release status](https://github.com/lightningkite/kotliner-cli/actions/workflows/release.yaml/badge.svg)](https://s01.oss.sonatype.org/content/repositories/releases/com/lightningkite/kotliner-cli/)
 [![snapshot status](https://github.com/lightningkite/kotliner-cli/actions/workflows/snapshot.yaml/badge.svg)](https://s01.oss.sonatype.org/content/repositories/snapshots/com/lightningkite/kotliner-cli/)
 
+[Release on Sonatype Releases](https://s01.oss.sonatype.org/content/repositories/releases/com/lightningkite/kotliner-cli/)
+[Release on Sonatype Snapshots](https://s01.oss.sonatype.org/content/repositories/snapshots/com/lightningkite/kotliner-cli/)
+
 ## Download
 
 ```kotlin
 dependencies {
   //...
-  implementation("com.lightningkite:kotliner-cli:1.0.1-SNAPSHOT")
+  implementation("com.lightningkite:kotliner-cli:$kotlinerVersion")
 }
 ```
 
@@ -38,21 +54,20 @@ Available commands:
 runServer(host: String = ..., port: Int = ...): Unit
 migrate(version: Int): Unit
 dump(to: File): Unit
-deleteItems(ids: IntArray): Unit
+deleteItems(ids: Int...): Unit
 
 $ myProgram runServer --help
 runServer
---host: String (optional)
---port: Int (optional)
-
+--host <String> (optional)
+--port <Int> (optional)
 $ myProgram runServer
-Running the server at 0.0.0.0 with port 8000
+Running the server at 0.0.0.0 on port 8080
 
 $ myProgram runServer 127.0.0.0 8080
-Running the server at 127.0.0.0 with port 8080
+Running the server at 127.0.0.0 on port 8080
 
 $ myProgram runServer --port 8080
-Running the server at 0.0.0.0 with port 8080
+Running the server at 0.0.0.0 on port 8080
 
 $ myProgram deleteItems 1 2 3
 Deleting 1, 2, 3
