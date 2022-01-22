@@ -5,6 +5,11 @@ import org.junit.Test
 import java.io.File
 
 class CliKtTest {
+    @Test fun splits() {
+        assertEquals(listOf("asdf", "fdsa", "asdf"), "asdf fdsa asdf".cliSplit())
+        assertEquals(listOf("asdf", "fd\"sa", "asdf"), "asdf fd\\\"sa asdf".cliSplit())
+        assertEquals(listOf("asdf", "fdsa asdf"), "asdf \"fdsa asdf\"".cliSplit())
+    }
     @Test fun testNoParams() {
         success = false
         cliReturning(arrayOf("commandA"), available = listOf(::commandA))

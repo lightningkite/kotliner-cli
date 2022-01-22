@@ -28,13 +28,20 @@ public class WrongCliArgumentsException: Exception("")
  * @param arguments The arguments given by the user.
  * @param setup The environment setup function which takes arguments before the sub command.
  * @param available The functions to make available as sub commands.
+ * @param useInteractive If enabled (which it is by default), entering only setup arguments or no arguments will launch into an interactive session where you may enter multiple commands.
  */
 public fun cli(
     arguments: Array<out String>,
     setup: KFunction<*> = ::noSetup,
-    available: List<KFunction<*>>
+    available: List<KFunction<*>>,
+    useInteractive: Boolean = true
 ): Unit = try {
-    val result = cliReturning(arguments, setup, available)
+    val result = cliReturning(
+        arguments = arguments,
+        setup = setup,
+        available = available,
+        useInteractive = useInteractive
+    )
     if(result != Unit) println(result)
     Unit
 } catch(e: WrongCliArgumentsException) {
@@ -59,7 +66,6 @@ public fun cli(
  * If the requirements for executing the function are not met OR `--help` is given, some help information is printed.
  *
  * @param arguments The arguments given by the user.
- * @param setup The environment setup function which takes arguments before the sub command.
  * @param available The functions to make available as sub commands.
  */
 public fun cli(
@@ -86,15 +92,17 @@ public fun cli(
  * @param arguments The arguments given by the user.
  * @param setup The environment setup function which takes arguments before the sub command.
  * @param available The functions to make available as sub commands.
+ * @param useInteractive If enabled (which it is by default), entering only setup arguments or no arguments will launch into an interactive session where you may enter multiple commands.
  * @return Returns the result of the function instead of printing it.
  */
 public fun cliReturning(
     arguments: Array<out String>,
     setup: KFunction<*> = ::noSetup,
-    available: List<KFunction<*>>
+    available: List<KFunction<*>>,
+    useInteractive: Boolean = true
 ): Any? {
     // Handle help
-    if(arguments.isEmpty() || arguments.size == 1 && arguments[0].endsWith("help") && arguments[0].startsWith("-")) {
+    if(arguments.size == 1 && arguments[0].endsWith("help") && arguments[0].startsWith("-")) {
         cliReturningHelp(setup, available)
     }
     val envArgs = HashMap<KParameter, Any?>()
@@ -122,9 +130,12 @@ public fun cliReturning(
         index++
     }
     val finalFunc = func
-    if(finalFunc == null) {
-        cliReturningHelp(setup, available)
-    }
+        ?: if(useInteractive) {
+            interactiveMode(available)
+            return null
+        } else {
+            cliReturningHelp(setup, available)
+        }
     return finalFunc.cliCall(funcArgs)
 }
 
@@ -132,6 +143,14 @@ private fun cliReturningHelp(
     setup: KFunction<*> = ::noSetup,
     available: List<KFunction<*>>
 ): Nothing {
+    cliHelp(setup, available)
+    throw WrongCliArgumentsException()
+}
+
+private fun cliHelp(
+    setup: KFunction<*> = ::noSetup,
+    available: List<KFunction<*>>
+) {
     setup.valueParameters
         .takeUnless { it.isEmpty() }
         ?.let {
@@ -145,7 +164,6 @@ private fun cliReturningHelp(
     for(a in available) {
         println(a.toHumanString())
     }
-    throw WrongCliArgumentsException()
 }
 
 /**
@@ -294,6 +312,60 @@ public fun <R> KFunction<R>.cliCall(arguments: List<String>): R {
         }
     }
     return this.callBy(realArgs)
+}
+
+private fun interactiveMode(
+    available: List<KFunction<*>>
+) {
+    println("Entering interactive mode:")
+    while(true) {
+        println()
+        val input = readLine() ?: return
+        if(input.isBlank() || input == "help") {
+            cliHelp(available = available)
+            continue
+        }
+        if(input == "exit" || input == "quit") return
+        val parts = input.cliSplit().toTypedArray()
+        cli(parts, available = available, useInteractive = false)
+    }
+}
+
+internal fun String.cliSplit(): List<String> {
+    val results = ArrayList<String>()
+    var start = 0
+    var index = 0
+    var inQuote = false
+    fun splitHere() {
+        val part = this.substring(start, index)
+        if(part.isNotBlank()) results.add(part
+            .replace("\\n", "\n")
+            .replace("\\b", "\b")
+            .replace("\\n", "\n")
+            .replace("\\r", "\r")
+            .replace("\\t", "\t")
+            .replace("\\\\", "\\")
+            .replace("\\'", "\'")
+            .replace("\\\"", "\"")
+        )
+        start = index + 1
+    }
+    while(index < this.length) {
+        when(this[index]) {
+            '"' -> if(start == index) {
+                inQuote = true
+                start++
+            } else {
+                inQuote = false
+                splitHere()
+            }
+            ' ' -> if(!inQuote) splitHere()
+            '\\' -> index++
+        }
+        index++
+    }
+    splitHere()
+    return results
 }
 
 private class SimpleType(override val classifier: KClassifier?): KType {

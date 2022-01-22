@@ -84,6 +84,7 @@ Deleting 1, 2, 3
 - [X] Enum Arguments (case-insensitive)
 - [X] Boolean Flags (i.e. using `--flag` for `flag=true`)
 - [X] Description Annotation - add the annotation to provide more documentation about functions and parameters.
+- [X] Interactive mode when no arguments are given (like `supervisor`)
 
 ## Potential Features
 
