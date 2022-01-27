@@ -131,6 +131,8 @@ public fun cliReturning(
     }
     val finalFunc = func
         ?: if(useInteractive) {
+            setup.isAccessible = true
+            setup.callBy(envArgs)
             interactiveMode(available)
             return null
         } else {
