@@ -1,14 +1,5 @@
 import com.lightningkite.deployhelpers.*
 
-buildscript {
-    repositories {
-        maven(url="https://s01.oss.sonatype.org/content/repositories/snapshots/")
-    }
-    dependencies {
-        classpath("com.lightningkite:deploy-helpers:master-SNAPSHOT")
-    }
-}
-
 plugins {
     kotlin("jvm")
     id("org.jetbrains.dokka")
