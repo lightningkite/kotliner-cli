@@ -49,17 +49,18 @@ fun deleteItems(vararg ids: Int) = println("Deleting ${ids.joinToString()}")
 ```
 
 ```
-$ myProgram
+$ myProgram --help
 Available commands:
-runServer(host: String = ..., port: Int = ...): Unit
-migrate(version: Int): Unit
-dump(to: File): Unit
-deleteItems(ids: Int...): Unit
+runServer [--host <String>] [--port <Int>]
+migrate --version <Int>
+dump --to <File>
+deleteItems --ids <Int...>
 
 $ myProgram runServer --help
 runServer
 --host <String> (optional)
 --port <Int> (optional)
+
 $ myProgram runServer
 Running the server at 0.0.0.0 on port 8080
 
