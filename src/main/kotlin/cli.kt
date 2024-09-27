@@ -179,12 +179,16 @@ public annotation class Description(val description: String)
 public annotation class Documentation(val documentation: String)
 
 private fun KParameter.toHumanString(): String {
-    return if(this.isVararg) this.name + ": " + this.varargType().toHumanString() + "..."
-    else this.name + ": " + this.type.toHumanString() + if(isOptional) " = ..." else ""
+//    return if(this.isVararg) this.name + ": " + this.varargType().toHumanString() + "..."
+//    else this.name + ": " + this.type.toHumanString() + if(isOptional) " = ..." else ""
+    return (if(this.isVararg) "--" + this.name + " <" + this.varargType().toHumanString() + "...>"
+    else "--" + this.name + " <" + this.type.toHumanString() + ">").let {
+        if(isOptional) "[$it]" else it
+    }
 }
 private fun KType.toHumanString(): String = this.jvmErasure.simpleName + if(isMarkedNullable) "?" else ""
 private fun KFunction<*>.toHumanString(): String {
-    val prefix = "${name}(${valueParameters.joinToString { it.toHumanString() }}): ${returnType.toHumanString()}"
+    val prefix = "${name} ${valueParameters.joinToString(" ") { it.toHumanString() }}"
     return findAnnotation<Description>()?.let { "$prefix - ${it.description}" } ?: prefix
 }
 
@@ -329,7 +333,11 @@ private fun interactiveMode(
         }
         if(input == "exit" || input == "quit") return
         val parts = input.cliSplit().toTypedArray()
-        cli(parts, available = available, useInteractive = false)
+        try {
+            cli(parts, available = available, useInteractive = false)
+        } catch(e: Exception) {
+            e.printStackTrace()
+        }
     }
 }
 

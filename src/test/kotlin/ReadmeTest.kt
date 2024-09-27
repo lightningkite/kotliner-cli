@@ -8,6 +8,7 @@ class ReadmeTest {
     @Test
     fun documentations() {
         emitForReadme("")
+        emitForReadme("--help")
         emitForReadme("runServer --help")
         emitForReadme("runServer")
         emitForReadme("runServer 127.0.0.0 8080")
